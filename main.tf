@@ -34,9 +34,18 @@ resource "azurerm_virtual_machine" "example" {
   }
 
     provisioner "local-exec" {
-      command = "echo Hello from the agent"
+      command = "./provision/environment/dev/scripts/dynamicinventory.sh"
     }
     provisioner "local-exec" {
       command = "@echo ##vso[task.setvariable variable=ip]${azurerm_public_ip.example.ip_address}"
     }
+
+    provisioner "local-exec" {
+    command = "sleep 180;sed -i 's/{host}/${azurerm_public_ip.example.ip_address}/g' ./provision/environment/dev/inventory/inventory"
+    }
+
+    provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook ./provision/environment/dev/playbooks/webservers.yml -i ./provision/environment/dev/inventory/inventory"
+    }
+
 }
